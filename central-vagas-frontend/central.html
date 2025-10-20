@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Central de Regulação de Vagas</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Central de Regulação de Vagas</h1>
+        </header>
+
+        <!-- <button id="auth-button">Autorizar Acesso à Planilha</button> -->
+
+        <div id="content" class="hidden">
+            <div class="form-group">
+                <label for="unidades">Unidades</label>
+                <select id="unidades" onchange="selecionarUnidade()"></select>
+            </div>
+            <div class="form-group">
+                <label>Capacidade de Vagas</label>
+                <input type="number" id="capacidade" readonly>
+            </div>
+            <div class="form-group">
+                <label>Vagas Utilizadas</label>
+                <input type="number" id="utilizadas" readonly>
+            </div>
+            <div class="form-group">
+                <label>Vagas Disponíveis</label>
+                <input type="number" id="disponiveis" readonly>
+            </div>
+            <div class="form-group">
+                <label>Vagas Solicitadas</label>
+                <input type="number" id="solicitadas" readonly>
+            </div>
+            <div class="form-group">
+                <label>Vagas Confirmadas</label>
+                <input type="number" id="confirmadas" readonly>
+            </div>
+            <div class="form-group">
+                <label for="reservar">Reservar Vagas</label>
+                <input type="number" id="reservar" min="0">
+            </div>
+            <button onclick="efetuarReserva()">Efetuar Reserva</button>
+        </div>
+
+        <div id="message-container"></div>
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
