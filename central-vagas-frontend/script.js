@@ -1,5 +1,6 @@
 // URL base da nossa API backend
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'https://central-vagas-backend.onrender.com/api';
+
 
 // Armazena todos os dados das unidades carregados da API
 let allData = [];

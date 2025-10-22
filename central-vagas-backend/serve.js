@@ -119,5 +119,7 @@ app.put('/api/unidades/:id/confirmar', async (req, res) => {
 
 // Inicia o servidor
 app.listen(PORT, () => {
-  console.log(`Servidor backend rodando em http://localhost:${PORT}`);
+  app.listen(3000, '0.0.0.0', () => {
+  console.log('Servidor rodando em http://0.0.0.0:3000');
+});
 });

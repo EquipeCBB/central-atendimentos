@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Unidades da Assistência Social</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 15px;
+        }
+
+        header h1 {
+            color: #333;
+            margin: 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        select,
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        input[type="number"]:read-only {
+            background-color: #eee;
+            cursor: not-allowed;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #auth-button {
+            background-color: #28a745;
+        }
+
+        #auth-button:hover {
+            background-color: #218838;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .message {
+            text-align: center;
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Módulo das Unidades de Assistência Social</h1>
+        </header>
+
+        <div id="content" class="hidden">
+            <div class="form-group">
+                <label for="unidades">Unidades</label>
+                <select id="unidades" onchange="selecionarUnidade()"></select>
+            </div>
+            <div class="form-group">
+                <label>Capacidade de Vagas</label>
+                <input type="number" id="capacidade" readonly>
+            </div>
+            <div class="form-group">
+                <label>Vagas Utilizadas</label>
+                <input type="number" id="utilizadas" readonly>
+            </div>
+            <div class="form-group">
+                <label>Vagas Disponíveis</label>
+                <input type="number" id="disponiveis" readonly>
+            </div>
+            <div class="form-group">
+                <label>Vagas Solicitadas</label>
+                <input type="number" id="solicitadas" readonly>
+            </div>
+            <div class="form-group">
+                <label for="confirmar">Quantidade de Vagas a Confirmar</label>
+                <input type="number" id="confirmar" min="0">
+            </div>
+            <button onclick="confirmarReserva()">Confirmar Reserva</button>
+        </div>
+
+        <div id="message-container"></div>
+    </div>
+
+    <script>
+        // URL base da nossa API backend
+        const API_URL = 'https://central-vagas-backend.onrender.com/api';
+
+
+        // Armazena todos os dados das unidades carregados da API
+        let allData = [];
+
+        // Função que é chamada assim que a página carrega
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarDadosAPI();
+        });
+
+        // Carrega os dados iniciais da API
+        async function carregarDadosAPI() {
+            showMessage('Carregando dados...', 'loading');
+            try {
+                const response = await fetch(`${API_URL}/unidades`);
+                if (!response.ok) {
+                    throw new Error(`Erro na rede: ${response.statusText}`);
+                }
+                allData = await response.json();
+                popularUnidades();
+                selecionarUnidade(); // Preenche os campos com a primeira unidade
+                hideMessage();
+
+                document.getElementById('content').classList.remove('hidden');
+
+            } catch (err) {
+                showMessage(`Erro ao carregar dados: ${err.message}. Verifique se o backend está rodando.`, 'error');
+                console.error(err);
+            }
+        }
+
+        function popularUnidades() {
+            const select = document.getElementById('unidades');
+            const valorSelecionado = select.value; // salva o valor atual
+
+            select.innerHTML = '<option value="">-- Selecione uma unidade --</option>';
+            allData.forEach((unidade) => {
+                const option = document.createElement('option');
+                option.value = unidade.id;
+                option.textContent = unidade.nome;
+                select.appendChild(option);
+            });
+
+            // restaura o valor selecionado, se ainda existir
+            if (valorSelecionado) {
+                select.value = valorSelecionado;
+            }
+        }
+
+        function selecionarUnidade() {
+            const selectedId = document.getElementById('unidades').value;
+            // Limpa todos os campos se nenhuma unidade for selecionada
+            const fields = ['capacidade', 'utilizadas', 'disponiveis', 'solicitadas', 'confirmadas', 'reservar', 'confirmar'];
+            fields.forEach(fieldId => {
+                const element = document.getElementById(fieldId);
+                if (element) element.value = '';
+            });
+
+            if (selectedId === "") return;
+
+            // Encontra a unidade selecionada nos dados já carregados
+            const unidadeData = allData.find(u => u.id == selectedId);
+            if (!unidadeData) return;
+
+            // Preenche os campos com os dados da unidade
+            document.getElementById('capacidade').value = unidadeData.capacidade_vagas;
+            document.getElementById('utilizadas').value = unidadeData.vagas_utilizadas;
+            document.getElementById('disponiveis').value = unidadeData.vagas_disponiveis;
+            document.getElementById('solicitadas').value = unidadeData.vagas_solicitadas;
+
+            // Módulo Central
+            if (document.getElementById('confirmadas')) {
+                document.getElementById('confirmadas').value = unidadeData.vagas_confirmadas;
+            }
+            // Módulo Unidades (pré-preenche o campo 'confirmar' com o valor de solicitadas)
+            if (document.getElementById('confirmar')) {
+                document.getElementById('confirmar').value = unidadeData.vagas_solicitadas;
+            }
+        }
+
+        // --- Funções Específicas dos Módulos ---
+
+        // MÓDULO CENTRAL
+        async function efetuarReserva() {
+            const selectedId = document.getElementById('unidades').value;
+            if (selectedId === "") {
+                return showMessage("Por favor, selecione uma unidade.", "error");
+            }
+
+            const vagasDesejadas = parseInt(document.getElementById('reservar').value) || 0;
+            // const vagasDesejadas = parseInt(document.getElementById('reservar').value) || 0;
+            if (vagasDesejadas <= 0) {
+                return showMessage("Por favor, informe um número de vagas válido.", "error");
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/unidades/${selectedId}/reservar`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ vagasDesejadas: vagasDesejadas }),
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || 'Erro do servidor');
+                }
+
+                showMessage(result.message, "success");
+                carregarDadosAPI(); // Recarrega os dados para refletir a mudança
+            } catch (err) {
+                showMessage(err.message, "error");
+                console.error(err);
+            }
+        }
+
+        // MÓDULO UNIDADES
+        async function confirmarReserva() {
+            const selectedId = document.getElementById('unidades').value;
+            if (selectedId === "") {
+                return showMessage("Por favor, selecione uma unidade.", "error");
+            }
+
+            const vagasAConfirmar = parseInt(document.getElementById('confirmar').value);
+            if (isNaN(vagasAConfirmar) || vagasAConfirmar < 0) {
+                return showMessage("Por favor, informe um número de vagas válido.", "error");
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/unidades/${selectedId}/confirmar`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ vagasAConfirmar: vagasAConfirmar }),
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || 'Erro do servidor');
+                }
+
+                showMessage(result.message, "success");
+                carregarDadosAPI(); // Recarrega os dados atualizados
+            } catch (err) {
+                showMessage(err.message, "error");
+                console.error(err);
+            }
+        }
+
+        // --- Funções Utilitárias ---
+        function showMessage(msg, type) {
+            const container = document.getElementById('message-container');
+            container.innerHTML = `<div class="message ${type}">${msg}</div>`;
+        }
+        function hideMessage() {
+            const container = document.getElementById('message-container');
+            container.innerHTML = '';
+        }
+
+    </script>
+
+</html>
