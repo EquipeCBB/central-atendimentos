@@ -110,13 +110,72 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+
+                /* Estilo do fundo do popup */
+        .popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.5);
+            /* fundo escurecido */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Caixa de mensagem */
+        .popup-content {
+            background-color: #ffffff;
+            padding: 25px 40px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+            max-width: 90%;
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        /* Animação suave ao abrir */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        #popup.hidden {
+            display: none;
+        }
+
+        .popup-emoji {
+            font-size: 3em;
+            /* emoji maior */
+            line-height: 1;
+        }
     </style>
 </head>
 
 <body>
+    
+    <div id="popup" class="popup hidden">
+        <div class="popup-content">
+            <span class="popup-emoji">✔️</span>
+            <p id="popup-message">Vagas Confirmada com sucesso!</p>
+        </div>
+    </div>
+
     <div class="container">
         <header>
-            <h1>Módulo das Unidades de Assistência Social</h1>
+            <h1>Unidades de Assistência Social</h1>
         </header>
 
         <div id="content" class="hidden">
@@ -173,7 +232,15 @@
                 }
                 allData = await response.json();
                 popularUnidades();
-                selecionarUnidade(); // Preenche os campos com a primeira unidade
+
+                // Restaura a unidade salva após popular o select
+                const unidadeSalva = sessionStorage.getItem('unidadeSelecionada');
+                if (unidadeSalva) {
+                    const select = document.getElementById('unidades');
+                    select.value = unidadeSalva;
+                }
+
+                selecionarUnidade(); // preenche os campos
                 hideMessage();
 
                 document.getElementById('content').classList.remove('hidden');
@@ -183,6 +250,7 @@
                 console.error(err);
             }
         }
+
 
         function popularUnidades() {
             const select = document.getElementById('unidades');
@@ -204,7 +272,10 @@
 
         function selecionarUnidade() {
             const selectedId = document.getElementById('unidades').value;
-            // Limpa todos os campos se nenhuma unidade for selecionada
+
+            // Salva no sessionStorage
+            sessionStorage.setItem('unidadeSelecionada', selectedId);
+
             const fields = ['capacidade', 'utilizadas', 'disponiveis', 'solicitadas', 'confirmadas', 'reservar', 'confirmar'];
             fields.forEach(fieldId => {
                 const element = document.getElementById(fieldId);
@@ -213,63 +284,25 @@
 
             if (selectedId === "") return;
 
-            // Encontra a unidade selecionada nos dados já carregados
             const unidadeData = allData.find(u => u.id == selectedId);
             if (!unidadeData) return;
 
-            // Preenche os campos com os dados da unidade
             document.getElementById('capacidade').value = unidadeData.capacidade_vagas;
             document.getElementById('utilizadas').value = unidadeData.vagas_utilizadas;
             document.getElementById('disponiveis').value = unidadeData.vagas_disponiveis;
             document.getElementById('solicitadas').value = unidadeData.vagas_solicitadas;
 
-            // Módulo Central
             if (document.getElementById('confirmadas')) {
                 document.getElementById('confirmadas').value = unidadeData.vagas_confirmadas;
             }
-            // Módulo Unidades (pré-preenche o campo 'confirmar' com o valor de solicitadas)
+
             if (document.getElementById('confirmar')) {
                 document.getElementById('confirmar').value = unidadeData.vagas_solicitadas;
             }
         }
 
+
         // --- Funções Específicas dos Módulos ---
-
-        // MÓDULO CENTRAL
-        async function efetuarReserva() {
-            const selectedId = document.getElementById('unidades').value;
-            if (selectedId === "") {
-                return showMessage("Por favor, selecione uma unidade.", "error");
-            }
-
-            const vagasDesejadas = parseInt(document.getElementById('reservar').value) || 0;
-            // const vagasDesejadas = parseInt(document.getElementById('reservar').value) || 0;
-            if (vagasDesejadas <= 0) {
-                return showMessage("Por favor, informe um número de vagas válido.", "error");
-            }
-
-            try {
-                const response = await fetch(`${API_URL}/unidades/${selectedId}/reservar`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ vagasDesejadas: vagasDesejadas }),
-                });
-
-                const result = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(result.message || 'Erro do servidor');
-                }
-
-                showMessage(result.message, "success");
-                carregarDadosAPI(); // Recarrega os dados para refletir a mudança
-            } catch (err) {
-                showMessage(err.message, "error");
-                console.error(err);
-            }
-        }
 
         // MÓDULO UNIDADES
         async function confirmarReserva() {
@@ -297,6 +330,7 @@
                 }
 
                 showMessage(result.message, "success");
+                mostrarPopup("Reserva efetuada com sucesso!");
                 carregarDadosAPI(); // Recarrega os dados atualizados
             } catch (err) {
                 showMessage(err.message, "error");
@@ -315,5 +349,26 @@
         }
 
     </script>
+
+    <script>
+        setTimeout(function () {
+            location.reload();
+        }, 30000); // 10000 milissegundos = 10 segundos
+    </script>
+
+    <script>
+        function mostrarPopup(mensagem) {
+            const popup = document.getElementById('popup');
+            const popupMessage = document.getElementById('popup-message');
+            popupMessage.textContent = mensagem;
+            popup.classList.remove('hidden');
+
+            // Fecha automaticamente após 3 segundos
+            setTimeout(() => {
+                popup.classList.add('hidden');
+            }, 3000);
+        }
+    </script>
+
 
 </html>
