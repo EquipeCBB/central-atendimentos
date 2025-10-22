@@ -297,7 +297,7 @@
             }
 
             if (document.getElementById('confirmar')) {
-                document.getElementById('confirmar').value = unidadeData.vagas_solicitadas;
+                document.getElementById('confirmar').value = unidadeData.vagas_disponiveis;
             }
         }
 
@@ -314,6 +314,10 @@
             const vagasAConfirmar = parseInt(document.getElementById('confirmar').value);
             if (isNaN(vagasAConfirmar) || vagasAConfirmar < 0) {
                 return showMessage("Por favor, informe um número de vagas válido.", "error");
+            }
+
+            if (vagasAConfirmar > parseInt(document.getElementById('disponiveis').value)) {
+                return showMessage("Não há vagas disponíveis suficientes para confirmar.", "error");
             }
 
             try {
