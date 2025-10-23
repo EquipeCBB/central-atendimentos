@@ -211,6 +211,16 @@
                 <label>Vagas Solicitadas</label>
                 <input type="number" id="solicitadas" readonly>
             </div>
+
+            <div class="form-group">
+                <label>Vagas Confirmadas</label>
+                <input type="number" id="confirmadas" readonly>
+            </div>
+            <div class="form-group">
+                <label>Vagas Pendentes</label>
+                <input type="number" id="pendentes" readonly>
+            </div>
+
             <div class="form-group">
                 <label for="confirmar">Quantidade de Vagas a Confirmar</label>
                 <input type="number" id="confirmar" min="0">
@@ -305,13 +315,14 @@
             document.getElementById('utilizadas').value = unidadeData.vagas_utilizadas;
             document.getElementById('disponiveis').value = unidadeData.vagas_disponiveis;
             document.getElementById('solicitadas').value = unidadeData.vagas_solicitadas;
+            document.getElementById('pendentes').value = unidadeData.vagas_pendentes;
 
             if (document.getElementById('confirmadas')) {
                 document.getElementById('confirmadas').value = unidadeData.vagas_confirmadas;
             }
 
             if (document.getElementById('confirmar')) {
-                document.getElementById('confirmar').value = unidadeData.vagas_disponiveis;
+                document.getElementById('confirmar').value = unidadeData.vagas_solicitadas;
             }
         }
 

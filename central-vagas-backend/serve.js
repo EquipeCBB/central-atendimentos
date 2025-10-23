@@ -82,7 +82,7 @@ app.put('/api/unidades/:id/confirmar', async (req, res) => {
     const { id } = req.params;
     const { vagasAConfirmar } = req.body;
 
-    if (vagasAConfirmar === undefined || vagasAConfirmar < 0) {
+    if (vagasAConfirmar === undefined || vagasAConfirmar <= 0) {
         return res.status(400).json({ message: 'Quantidade de vagas a confirmar inválida.' });
     }
     
@@ -102,11 +102,12 @@ app.put('/api/unidades/:id/confirmar', async (req, res) => {
         const novasSolicitadas = unidade.vagas_solicitadas - vagasAConfirmar;
         const novasUtilizadas = unidade.vagas_utilizadas + vagasAConfirmar;
         const novasDisponiveis = unidade.vagas_disponiveis - vagasAConfirmar;
+        const vagasConfirmadas = unidade.vagasConfirmadas + vagasAConfirmar;
 
         // Atualiza o banco
         const updateResult = await pool.query(
-            'UPDATE unidades SET vagas_utilizadas = $1, vagas_disponiveis = $2, vagas_solicitadas = $3 WHERE id = $4 RETURNING *',
-            [novasUtilizadas, novasDisponiveis, novasSolicitadas, id]
+            'UPDATE unidades SET vagas_utilizadas = $1, vagas_disponiveis = $2, vagas_solicitadas = $3, vagas_confirmadas = $4 WHERE id = $5 RETURNING *',
+            [novasUtilizadas, novasDisponiveis, novasSolicitadas, vagasConfirmadas, id]
         );
 
         res.json({ message: 'Reserva confirmada com sucesso.', unidade: updateResult.rows[0] });

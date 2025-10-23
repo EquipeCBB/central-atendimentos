@@ -217,6 +217,11 @@
                 <input type="number" id="confirmadas" readonly>
             </div>
             <div class="form-group">
+                <label>Vagas Pendentes</label>
+                <input type="number" id="pendentes" readonly>
+            </div>
+
+            <div class="form-group">
                 <label for="reservar">Reservar Vagas</label>
                 <input type="number" id="reservar" min="0">
             </div>
@@ -293,7 +298,7 @@
             // Salva no sessionStorage
             sessionStorage.setItem('unidadeSelecionada', selectedId);
 
-            const fields = ['capacidade', 'utilizadas', 'disponiveis', 'solicitadas', 'confirmadas', 'reservar', 'confirmar'];
+            const fields = ['capacidade', 'utilizadas', 'disponiveis', 'solicitadas', 'confirmadas', 'pendentes', 'reservar', 'confirmar'];
             fields.forEach(fieldId => {
                 const element = document.getElementById(fieldId);
                 if (element) element.value = '';
@@ -310,6 +315,7 @@
             document.getElementById('utilizadas').value = unidadeData.vagas_utilizadas;
             document.getElementById('disponiveis').value = unidadeData.vagas_disponiveis;
             document.getElementById('solicitadas').value = unidadeData.vagas_solicitadas;
+            document.getElementById('pendentes').value = unidadeData.vagas_pendentes;
 
             if (document.getElementById('confirmadas')) {
                 document.getElementById('confirmadas').value = unidadeData.vagas_confirmadas;
